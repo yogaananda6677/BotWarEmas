@@ -1,3 +1,10 @@
+# Virtual environment
 venv/
+
+# Python cache
 __pycache__/
 *.pyc
+
+# Playwright cache / browsers
+playwright/.local-browsers/
+playwright/.cache/
