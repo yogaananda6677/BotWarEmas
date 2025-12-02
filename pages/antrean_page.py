@@ -70,6 +70,20 @@ class AntreanPage:
         except Exception as e:
             print(f"[❌] Error clicking ambil antrean: {e}")
             return False
+        
+    # async def cek_butik_kuota(self):
+    #     try:
+    #         cek_btn_penuh = await self.browser.page.query_selector(
+    #             '.btn-secondary:has-text("Penuh"), button:has-text("Penuh")'
+    #         )
+    #         if cek_btn_penuh:
+    #             await ambil_btn.click()
+    #             print("[✅] Ambil Antrean clicked!")
+    #             return True
+    #         return False
+    #     except Exception as e:
+    #         print(f"[❌] Error clicking ambil antrean: {e}")
+    #         return False
 
     async def wait_for_target_time(self):
         """Tunggu waktu target dengan persiapan"""
@@ -77,7 +91,7 @@ class AntreanPage:
         print(f"[⏰] Target: {target_time} | Preparation@-{self.config.prep_time_offset}s")
         
         time_selected = False
-        last_refresh = self.time_helper.current_time
+        last_refresh = self.time_helper.current_timestamp
         
         while True:
             now = self.time_helper.current_time
@@ -87,7 +101,7 @@ class AntreanPage:
             time_diff = (target - now).total_seconds()
             
             # 🎯 TARGET REACHED
-            if time_diff <= 0:
+            if time_diff <= self.config.click_advance_seconds:
                 print(f"[🎯] TARGET TIME! Submitting... ({current_str})")
                 return True
             
@@ -107,7 +121,7 @@ class AntreanPage:
                  (self.time_helper.current_timestamp - last_refresh) >= self.config.refresh_interval:
                 print(f"[🔄] Refreshing... ({current_str})")
                 await self.browser.page.reload()
-                await self.browser.wait_for_timeout(2000)
+                await self.browser.wait_for_timeout(1000)
                 last_refresh = self.time_helper.current_timestamp
             
             # 📊 Progress update

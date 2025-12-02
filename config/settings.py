@@ -2,8 +2,9 @@ class Config:
     def __init__(self):
         self.username = "089666310210"
         self.password = "anam1245"
-        self.butik_value = "3"
-        self.target_time = "11:30"
+        self.butik_value = "19"
+        self.target_time = "07:00"
+        self.click_advance_seconds = 3
         
         # URLs
         self.login_url = "https://antrean.logammulia.com/login"

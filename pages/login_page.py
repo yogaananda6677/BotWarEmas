@@ -43,6 +43,50 @@ class LoginPage:
             return True
         except:
             return False
+        
+    async def check_captcha(self):
+        """Coba CAPTCHA otomatis dulu, kalau gagal langsung manual."""
+        page = self.browser.page
+
+        try:
+            # 1. Cari iframe reCAPTCHA
+            recaptcha_frame_el = await page.query_selector('iframe[src*="google.com/recaptcha"]')
+            if recaptcha_frame_el:
+                frame = await recaptcha_frame_el.content_frame()
+                if frame:
+                    checkbox = await frame.query_selector('.recaptcha-checkbox-border, .recaptcha-checkbox-checkmark')
+                    
+                    if checkbox:
+                        await checkbox.click()
+                        print("[✓] reCAPTCHA checkbox clicked!")
+                        await page.wait_for_timeout(3000)
+
+                        # Cek solved atau tidak
+                        is_solved = await frame.evaluate("""() => {
+                            const response = document.querySelector('#g-recaptcha-response');
+                            return response && response.value && response.value.length > 0;
+                        }""")
+
+                        if is_solved:
+                            print("[🎉] reCAPTCHA solved automatically!")
+                            return True
+
+                    print("[⚠️] reCAPTCHA not solved → switching to manual...")
+                else:
+                    print("[⚠️] Cannot access reCAPTCHA frame → manual needed")
+            else:
+                print("[ℹ️] No reCAPTCHA detected on the page.")
+                return True  # Tidak ada CAPTCHA → lanjut saja
+
+        except Exception as e:
+            print(f"[❌] Automatic CAPTCHA failed: {e}")
+
+        # --- 2. FALLBACK MANUAL ---
+        print("[🛡️] Manual CAPTCHA required!")
+        await self.wait_for_manual_captcha()
+        return True
+
+    
 
     async def wait_for_manual_captcha(self):
         """Tunggu user selesaikan CAPTCHA manual"""
@@ -77,13 +121,13 @@ class LoginPage:
         """Proses login lengkap"""
         print("[🔐] Starting login process...")
         
+        # Navigate ke login page
+        await self.browser.goto(self.config.login_url)
+
         # Cek apakah sudah login
         if await self.is_logged_in():
             return True
             
-        # Navigate ke login page
-        await self.browser.goto(self.config.login_url)
-        
         if not await self.is_login_page():
             print("[⚠️] Not on login page, checking status...")
             return await self.is_logged_in()
@@ -96,7 +140,7 @@ class LoginPage:
         await self.click_remember_me()
         
         # Manual CAPTCHA
-        await self.wait_for_manual_captcha()
+        await self.check_captcha()
         
         # Submit login
         if not await self.submit_login():
